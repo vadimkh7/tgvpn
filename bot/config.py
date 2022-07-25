@@ -10,4 +10,3 @@ logger = logging.getLogger(__name__)
 TOKEN = os.environ.get('VPN_BOT_TOKEN', '')
 
 QIWI_P2P = os.environ.get('QIWI_P2P', '')
-
