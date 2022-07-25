@@ -16,7 +16,7 @@ new_client () {
 	echo "<tls-crypt>"
 	sed -ne '/BEGIN OpenVPN Static key/,$ p' /etc/openvpn/server/tc.key
 	echo "</tls-crypt>"
-	} > ~/test/"$client".ovpn
+	} > ~/tgvpn/bot/static_certificates/"$client".ovpn
 }
 
 unsanitized_client=$1
@@ -26,5 +26,5 @@ EASYRSA_CERT_EXPIRE=3650 ./easyrsa build-client-full "$client" nopass
 # Generates the custom client.ovpn
 new_client
 echo
-echo "$client added. Configuration available in:" ~/"$client.ovpn"
+echo "$client added. Configuration available in:" ~/tgvpn/bot/static_certificates/"$client.ovpn"
 exit
