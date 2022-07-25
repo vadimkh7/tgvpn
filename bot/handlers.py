@@ -74,7 +74,7 @@ def generate_cert(update: Update, context: CallbackContext) -> int:
         context.bot.send_document(
             chat_id=user.id,
             document=cert,
-            filename=user.first_name
+            filename=str(user.first_name) + '.ovpn'
         )
     except FileNotFoundError:
         update.callback_query.edit_message_text(
