@@ -8,7 +8,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
     CallbackQueryHandler
 
 import bot.localization as lc
-from bot.config import QIWI_P2P
+from bot.config import QIWI_P2P, logger
 from bot.utils import get_inline_keyboard, get_inline_button
 
 START, MENU, RETURN, REVOKE = range(4)
@@ -76,6 +76,7 @@ def generate_cert(update: Update, context: CallbackContext) -> int:
             document=cert,
             filename=str(user.first_name) + '.ovpn'
         )
+        logger.info(f'Added new user: {user.full_name}, {user.id}')
     except FileNotFoundError:
         update.callback_query.edit_message_text(
             'Конфиг не сгенерировался, пиши мне в лс @vadimkh7',
