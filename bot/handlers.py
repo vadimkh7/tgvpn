@@ -119,6 +119,7 @@ def setup_dispatcher(updater: Updater) -> None:
         },
         fallbacks=[],
         persistent=True,
-        name='conv'
+        name='conv',
+        allow_reentry=True
     )
     dispatcher.add_handler(conv_handler)
