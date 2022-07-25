@@ -128,6 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-/bot/config.py
-
 /conv_data
+
+*.ovpn

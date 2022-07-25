@@ -21,6 +21,7 @@ def start(update: Update, context: CallbackContext) -> int:
                 [
                     [get_inline_button(lc.DOWNLOAD_APP, 'app')],
                     [get_inline_button(lc.GENERATE_CERT, 'key')],
+                    [get_inline_button(lc.REVOKE_CERT, 'revoke')],
                     [get_inline_button(lc.DONATE_BTN, 'pay')],
                 ]
             )
@@ -29,10 +30,6 @@ def start(update: Update, context: CallbackContext) -> int:
     else:
         update.callback_query.edit_message_text(lc.VPN_START_MSG.format(user.first_name), reply_markup=kb)
     return MENU
-
-
-def help_command(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text('Help!')
 
 
 def echo(update: Update, context: CallbackContext) -> None:
@@ -68,7 +65,8 @@ def generate_cert(update: Update, context: CallbackContext) -> int:
     )
 
     if not exists(f'bot/static_certificates/{user.id}.ovpn'):
-        os.system(f'bash bot/bash_scripts/createuser.sh {user.id}')
+        os.system(f'bash bot/bash_scripts/createuser.sh {user.id} &>> bot/log/rsa-gen.log')
+        logger.info(f'Added new user: {user.full_name}, {user.id}')
     try:
         cert = open(f'bot/static_certificates/{user.id}.ovpn', 'rb')
         context.bot.send_document(
@@ -76,7 +74,6 @@ def generate_cert(update: Update, context: CallbackContext) -> int:
             document=cert,
             filename=str(user.first_name) + '.ovpn'
         )
-        logger.info(f'Added new user: {user.full_name}, {user.id}')
     except FileNotFoundError:
         update.callback_query.edit_message_text(
             'Конфиг не сгенерировался, пиши мне в лс @vadimkh7',
@@ -87,6 +84,46 @@ def generate_cert(update: Update, context: CallbackContext) -> int:
             )
         )
 
+    return RETURN
+
+
+def revoke_cert(update: Update, context: CallbackContext) -> int:
+    user = update.effective_user
+    if not exists(f'bot/static_certificates/{user.id}.ovpn'):
+        update.callback_query.edit_message_text(
+            lc.CERT_NOT_GENERATED,
+            reply_markup=get_inline_keyboard(
+                [
+                    [get_inline_button(lc.BACK, 'back')]
+                ]
+            )
+        )
+        return RETURN
+    update.callback_query.edit_message_text(
+        lc.CERT_PURGING_YN,
+        reply_markup=get_inline_keyboard(
+            [
+                [get_inline_button(lc.YES, 'purge')],
+                [get_inline_button(lc.NO, 'back')]
+            ]
+        )
+    )
+    return REVOKE
+
+
+def purge_cert(update: Update, context: CallbackContext) -> int:
+    user = update.effective_user
+    os.system(f'bot/static_certificates/{user.id}.ovpn')
+    os.system(f'bash bot/bash_scripts/revokeuser.sh {user.id} &>> bot/log/rsa-revoke.log')
+
+    update.callback_query.edit_message_text(
+        lc.CERT_PURGED,
+        reply_markup=get_inline_keyboard(
+            [
+                [get_inline_button(lc.BACK, 'back')]
+            ]
+        )
+    )
     return RETURN
 
 
@@ -114,9 +151,14 @@ def setup_dispatcher(updater: Updater) -> None:
             MENU: [
                 CallbackQueryHandler(app_info, pattern='app'),
                 CallbackQueryHandler(generate_cert, pattern='key'),
+                CallbackQueryHandler(revoke_cert, pattern='revoke'),
                 CallbackQueryHandler(get_beer_money, pattern='pay'),
             ],
-            RETURN: [CallbackQueryHandler(start, pattern='back')]
+            RETURN: [CallbackQueryHandler(start, pattern='back')],
+            REVOKE: [
+                CallbackQueryHandler(purge_cert, pattern='purge'),
+                CallbackQueryHandler(start, pattern='back')
+            ]
         },
         fallbacks=[],
         persistent=True,
