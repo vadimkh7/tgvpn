@@ -6,9 +6,9 @@ logging.basicConfig(
     level=logging.INFO,
     filename='bot/log/info.log',
 )
-
 logger = logging.getLogger(__name__)
 
 TOKEN = os.environ.get('VPN_BOT_TOKEN', '')
-
 QIWI_P2P = os.environ.get('QIWI_P2P', '')
+ADMINS = os.environ.get('ADMIN_VPN_USERS', '314722127').split(',')
+DEBUG = False
