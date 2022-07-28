@@ -159,7 +159,6 @@ def get_beer_money(update: Update, context: CallbackContext) -> int:
             ]
         )
     )
-    context.bot.getChat()
     return RETURN
 
 
