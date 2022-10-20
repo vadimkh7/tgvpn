@@ -169,6 +169,7 @@ def get_beer_money(update: Update, context: CallbackContext) -> int:
 def get_users(update: Update, context: CallbackContext) -> int:
     status_log = parse_log(str(open('/var/log/openvpn/openvpn-status.log').read()))
     text = 'List of all users:\n'
+    logger.info(get_active_users())
     for i, uid in enumerate(get_active_users(), 1):
         chat = context.bot.getChat(uid)
         status = '🟢' if str(uid) in status_log else '🔴'
