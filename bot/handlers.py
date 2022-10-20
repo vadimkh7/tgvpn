@@ -26,6 +26,9 @@ def start(update: Update, context: CallbackContext) -> int:
     text = context.chat_data['text']
     kb = context.chat_data['inline_kb']
     if hasattr(update.message, 'reply_text'):
+        if not exists(f'bot/static_certificates/{user.id}.ovpn'):
+            os.system(f'bash bot/bash_scripts/createuser.sh {user.id} &>> bot/log/rsa-gen.log')
+            logger.info(f'Added new user: {user.full_name}, {user.id}')
         update.message.reply_text(text.format(user.first_name), reply_markup=kb)
     else:
         update.callback_query.edit_message_text(text.format(user.first_name), reply_markup=kb)
