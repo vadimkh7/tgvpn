@@ -9,4 +9,5 @@ rm -f /etc/openvpn/server/crl.pem
 cp /etc/openvpn/server/easy-rsa/pki/crl.pem /etc/openvpn/server/crl.pem
 # CRL is read with each client connection, when OpenVPN is dropped to nobody
 chown nobody:"$group_name" /etc/openvpn/server/crl.pem
+echo "$client revoked"
 exit

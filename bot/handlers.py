@@ -135,7 +135,7 @@ def revoke_cert(update: Update, context: CallbackContext) -> int:
 
 def purge_cert(update: Update, context: CallbackContext) -> int:
     user = update.effective_user
-    os.system(f'bot/static_certificates/{user.id}.ovpn')
+    os.system(f'rm bot/static_certificates/{user.id}.ovpn')
     os.system(f'bash bot/bash_scripts/revokeuser.sh {user.id} &>> bot/log/rsa-revoke.log')
 
     update.callback_query.edit_message_text(
