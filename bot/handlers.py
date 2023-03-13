@@ -170,6 +170,9 @@ def get_beer_money(update: Update, context: CallbackContext) -> int:
 
 @admin_command
 def get_users(update: Update, context: CallbackContext) -> int:
+    update.callback_query.edit_message_text(
+        "Загрузка..."
+    )
     status_log = parse_log(str(open('/var/log/openvpn/openvpn-status.log').read()))
     active_users = get_active_users()
     users_strings = context.user_data['users'] = list()
