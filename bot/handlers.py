@@ -3,6 +3,7 @@ import os
 import uuid
 from math import ceil
 from os.path import exists
+from time import sleep
 
 from pyqiwip2p import QiwiP2P
 from telegram import Update
@@ -41,6 +42,8 @@ def start(update: Update, context: CallbackContext) -> int:
 @admin_command
 def echo_users(update: Update, context: CallbackContext) -> None:
     context.chat_data['message'] = update.message.text
+    context.chat_data['message_id'] = update.message.message_id
+    update.message.delete()
     update.message.reply_text(
         update.message.text,
         reply_markup=get_inline_keyboard(
@@ -56,8 +59,13 @@ def echo_users(update: Update, context: CallbackContext) -> None:
 def send_messages(update: Update, context: CallbackContext) -> None:
     if update.callback_query.data == 'send':
         user_ids = get_active_users()
+        cooldown = 0
         for uid in user_ids:
             context.bot.send_message(uid, context.chat_data['message'])
+            cooldown += 1
+            if cooldown > 24:
+                cooldown = 0
+                sleep(1)
     update.callback_query.delete_message()
 
 
