@@ -185,7 +185,12 @@ def get_users(update: Update, context: CallbackContext) -> int:
         mention = f"[{uid}](tg://user?id={uid})"
         mention = context.bot.getChatMember(chat_id=uid, user_id=uid).user.mention_html(str(uid))
         # users_strings.append(f'{i}.{firstname}{lastname}{tag} - {mention}{status}\n')
-        users_strings.append(html.escape(f'{i}.{firstname}{lastname}{tag} - ') + mention + html.escape(f'{status}\n'))
+        user_line = '<code>' +\
+                    html.escape(f'{i:4}.{status}') +\
+                    '</code>'\
+                    + html.escape(f'{firstname}{lastname}{tag} - ')\
+                    + mention + html.escape(f'\n')
+        users_strings.append(user_line)
     text = text + "".join(users_strings[len(active_users) - len(active_users) % 30:])
     update.callback_query.edit_message_text(
         text,
