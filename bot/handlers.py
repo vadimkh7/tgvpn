@@ -65,8 +65,14 @@ def send_messages(update: Update, context: CallbackContext) -> None:
         cooldown = 0
         sent = list()
         for uid in user_ids:
-            m = context.bot.send_message(uid, context.chat_data['message'])
-            sent.append((uid, m.message_id))
+            try:
+                m = context.bot.send_message(uid, context.chat_data['message'])
+                sent.append((uid, m.message_id))
+            except Exception:
+                chat_member = context.bot.getChatMember(chat_id=uid, user_id=uid)
+                context.bot.send_message(chat_id=314722127,
+                                         text=chat_member.user.mention_markdown(),
+                                         parse_mode="Markdown")
             cooldown += 1
             if cooldown > 20:
                 cooldown = 0
