@@ -77,14 +77,14 @@ def send_messages(update: Update, context: CallbackContext) -> None:
             if cooldown > 20:
                 cooldown = 0
                 sleep(1.2)
-        sleep(10)
-        cooldown = 0
-        for mes in sent:
-            context.bot.delete_message(*mes)
-            cooldown += 1
-            if cooldown > 20:
-                cooldown = 0
-                sleep(1.2)
+        # sleep(10)
+        # cooldown = 0
+        # for mes in sent:
+        #     context.bot.delete_message(*mes)
+        #     cooldown += 1
+        #     if cooldown > 20:
+        #         cooldown = 0
+        #         sleep(1.2)
     update.callback_query.delete_message()
 
 
