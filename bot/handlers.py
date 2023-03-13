@@ -63,12 +63,17 @@ def send_messages(update: Update, context: CallbackContext) -> None:
     if update.callback_query.data == 'send':
         user_ids = get_active_users()
         cooldown = 0
-        for uid in user_ids:
-            context.bot.send_message(uid, context.chat_data['message'])
+        sent = list()
+        for uid in [user_ids[0]]:
+            m = context.bot.send_message(uid, context.chat_data['message'])
+            sent.append((uid, m.message_id))
             cooldown += 1
-            if cooldown > 24:
+            if cooldown > 20:
                 cooldown = 0
                 sleep(1)
+        sleep(10)
+        for mes in sent:
+            context.bot.delete_message(*mes)
     update.callback_query.delete_message()
 
 
