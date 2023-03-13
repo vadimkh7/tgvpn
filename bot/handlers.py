@@ -13,7 +13,7 @@ from bot.decorators import admin_command, enrich_response_data
 from bot.keyboards import MENU_KB, ADMIN_MENU_KB
 from bot.utils import get_inline_keyboard, get_inline_button, get_active_users, parse_log
 
-START, MENU, RETURN, REVOKE = range(4)
+START, MENU, RETURN, REVOKE, USERS = range(5)
 END = ConversationHandler.END
 
 
@@ -180,7 +180,7 @@ def get_users(update: Update, context: CallbackContext) -> int:
         else:
             text += f'UNDEF: {uid}'
     update.callback_query.edit_message_text(
-        text,
+        text[500:],
         reply_markup=get_inline_keyboard(
             [
                 [get_inline_button(lc.BACK, 'back')]
@@ -206,6 +206,7 @@ def get_stats(update: Update, context: CallbackContext) -> int:
         text,
         reply_markup=get_inline_keyboard(
             [
+                [get_inline_button(lc.NEXT_USERS, 'next_users'), get_inline_button(lc.BACK_USERS, 'back_users')],
                 [get_inline_button(lc.BACK, 'back')]
             ]
         )
@@ -227,6 +228,9 @@ def setup_dispatcher(updater: Updater) -> None:
                 CallbackQueryHandler(get_stats, pattern='stats'),
             ],
             RETURN: [CallbackQueryHandler(start, pattern='back')],
+            USERS: [
+                CallbackQueryHandler(start, pattern='back')
+            ],
             REVOKE: [
                 CallbackQueryHandler(purge_cert, pattern='purge'),
                 CallbackQueryHandler(start, pattern='back')
