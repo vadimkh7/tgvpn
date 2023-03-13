@@ -1,5 +1,7 @@
+import html
 import os
 import uuid
+from math import ceil
 from os.path import exists
 
 from pyqiwip2p import QiwiP2P
@@ -14,6 +16,7 @@ from bot.keyboards import MENU_KB, ADMIN_MENU_KB
 from bot.utils import get_inline_keyboard, get_inline_button, get_active_users, parse_log
 
 START, MENU, RETURN, REVOKE, USERS = range(5)
+PAGE_SIZE = 15
 END = ConversationHandler.END
 
 
@@ -168,27 +171,62 @@ def get_beer_money(update: Update, context: CallbackContext) -> int:
 @admin_command
 def get_users(update: Update, context: CallbackContext) -> int:
     status_log = parse_log(str(open('/var/log/openvpn/openvpn-status.log').read()))
-    text = 'List of all users:\n'
-    logger.info(get_active_users())
-    for i, uid in enumerate(get_active_users(), 1):
+    active_users = get_active_users()
+    users_strings = context.user_data['users'] = list()
+    context.user_data['users_pages'] = ceil(len(active_users) / PAGE_SIZE)
+    page = context.user_data['current_page'] = context.user_data['users_pages']
+    text = html.escape('List of users(page {page}):\n')
+    for i, uid in enumerate(active_users, 1):
         chat = context.bot.getChat(uid)
         status = '🟢' if str(uid) in status_log else '🔴'
-        if hasattr(chat, 'username'):
-            try:
-                text += f'{i}. {chat.first_name} {chat.last_name} @{chat.username} - {uid}{status}\n'
-            except AttributeError:
-                text = f'{i}. @{chat.username} - {uid}{status}\n'
-        else:
-            text += f'UNDEF: {uid}'
+        firstname = f' {chat.first_name}' if chat.first_name is not None else ""
+        lastname = f' {chat.last_name}' if chat.last_name is not None else ""
+        tag = f' @{chat.username}' if chat.username is not None else ""
+        mention = f"[{uid}](tg://user?id={uid})"
+        mention = context.bot.getChatMember(chat_id=uid, user_id=uid).user.mention_html(str(uid))
+        # users_strings.append(f'{i}.{firstname}{lastname}{tag} - {mention}{status}\n')
+        users_strings.append(html.escape(f'{i}.{firstname}{lastname}{tag} - ') + mention + html.escape(f'{status}\n'))
+    text = text + "".join(users_strings[len(active_users) - len(active_users) % 30:])
     update.callback_query.edit_message_text(
-        text[500:],
+        text,
         reply_markup=get_inline_keyboard(
             [
+                [get_inline_button(lc.BACK_USERS, 'back_users')],
                 [get_inline_button(lc.BACK, 'back')]
             ]
-        )
+        ),
+        parse_mode="HTML"
     )
-    return RETURN
+    return USERS
+
+
+@admin_command
+def nav_users(update: Update, context: CallbackContext) -> int:
+    print(update.callback_query.data)
+    users_strings = context.user_data['users']
+    page = context.user_data['current_page'] = context.user_data['current_page'] - 1\
+        if update.callback_query.data == 'back_users' else context.user_data['current_page'] + 1
+    text = f'List of users(page {page}):\n'
+    end_range = PAGE_SIZE * (page - 1) + PAGE_SIZE if page != context.user_data['users_pages'] else len(users_strings)
+    for i in range(PAGE_SIZE * (page - 1), end_range):
+        text += users_strings[i]
+    if page == context.user_data['users_pages']:
+        nav_buttons = [get_inline_button(lc.BACK_USERS, 'back_users')]
+    elif page == 1:
+        nav_buttons = [get_inline_button(lc.NEXT_USERS, 'next_users')]
+    else:
+        nav_buttons = [get_inline_button(lc.BACK_USERS, 'back_users'), get_inline_button(lc.NEXT_USERS, 'next_users')]
+    update.callback_query.edit_message_text(
+        text,
+        reply_markup=get_inline_keyboard(
+            [
+                nav_buttons,
+                [get_inline_button(lc.BACK, 'back')]
+            ]
+        ),
+        parse_mode="HTML"
+    )
+    return USERS
 
 
 def get_stats(update: Update, context: CallbackContext) -> int:
@@ -207,7 +245,6 @@ def get_stats(update: Update, context: CallbackContext) -> int:
         text,
         reply_markup=get_inline_keyboard(
             [
-                [get_inline_button(lc.NEXT_USERS, 'next_users'), get_inline_button(lc.BACK_USERS, 'back_users')],
                 [get_inline_button(lc.BACK, 'back')]
             ]
         )
@@ -230,6 +267,8 @@ def setup_dispatcher(updater: Updater) -> None:
             ],
             RETURN: [CallbackQueryHandler(start, pattern='back')],
             USERS: [
+                CallbackQueryHandler(nav_users, pattern='next_users'),
+                CallbackQueryHandler(nav_users, pattern='back_users'),
                 CallbackQueryHandler(start, pattern='back')
             ],
             REVOKE: [

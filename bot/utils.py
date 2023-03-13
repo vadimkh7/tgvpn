@@ -27,7 +27,6 @@ def get_inline_keyboard(
     return InlineKeyboardMarkup(buttons)
 
 
-
 def get_active_users() -> List[str]:
     res = subprocess.run(
         ['bash', '/root/tgvpn/bot/bash_scripts/getusers.sh'],
