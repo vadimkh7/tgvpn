@@ -214,7 +214,6 @@ def get_users(update: Update, context: CallbackContext) -> int:
         firstname = f' {chat.first_name}' if chat.first_name is not None else ""
         lastname = f' {chat.last_name}' if chat.last_name is not None else ""
         tag = f' @{chat.username}' if chat.username is not None else ""
-        mention = f"[{uid}](tg://user?id={uid})"
         mention = context.bot.getChatMember(chat_id=uid, user_id=uid).user.mention_html(str(uid))
         # users_strings.append(f'{i}.{firstname}{lastname}{tag} - {mention}{status}\n')
         user_line = '<code>' +\
@@ -270,13 +269,24 @@ def get_stats(update: Update, context: CallbackContext) -> int:
     status_log = parse_log(str(open('/var/log/openvpn/openvpn-status.log').read()))
     text = f'Пользуются VPN прямо сейчас: {len(status_log)}\n'
     if str(update.effective_user.id) in ADMINS:
-        for i, (name, log) in enumerate(status_log.items(), 1):
+        for i, (uid, log) in enumerate(status_log.items(), 1):
             try:
-                int(name)
-                valid_name = context.bot.getChat(name).username
-                text += f'{i}. @{valid_name}\n'
+                int(uid)
+                # valid_name = context.bot.getChat(uid).username
+                # text += f'{i}. @{valid_name}\n'
+                chat = context.bot.getChat(uid)
+                firstname = f' {chat.first_name}' if chat.first_name is not None else ""
+                lastname = f' {chat.last_name}' if chat.last_name is not None else ""
+                tag = f' @{chat.username}' if chat.username is not None else ""
+                mention = context.bot.getChatMember(chat_id=uid, user_id=uid).user.mention_html(str(uid))
+                user_line = '<code>' + \
+                            html.escape(f'{i:4}.') + \
+                            '</code>' \
+                            + html.escape(f'{firstname}{lastname}{tag} - ') \
+                            + mention + html.escape(f'\n')
+                text += user_line
             except ValueError:
-                valid_name = name
+                valid_name = uid
                 text += f'{i}. {valid_name}\n'
     update.callback_query.edit_message_text(
         text,
@@ -284,7 +294,8 @@ def get_stats(update: Update, context: CallbackContext) -> int:
             [
                 [get_inline_button(lc.BACK, 'back')]
             ]
-        )
+        ),
+        parse_mode="HTML"
     )
     return RETURN
 
